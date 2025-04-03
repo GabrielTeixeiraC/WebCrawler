@@ -21,5 +21,4 @@ class Parser:
     """
     soup = BeautifulSoup(html_content, 'html.parser')
     links = soup.find_all('a')
-    for link in links:
-      print(link.get('href'))
+    return [link.get('href') for link in links if link.get('href') is not None]
