@@ -13,8 +13,10 @@ class Storer:
     pages_per_file (int): Number of pages that will be stored in each WARC file.
     corpus_folder_path (str): Path for the folder where the WARC files will be stored
   """
-  def __init__(self, pages_per_file: int = 1000, corpus_folder_path: str = "../corpus/"):
+  def __init__(self, pages_per_file: int = 2, corpus_folder_path: str = "../corpus/"):
     self.pages_per_file = pages_per_file
+    self.pages_in_current_file = 0
+    self.current_file_index = 0
     self.corpus_folder_path = corpus_folder_path
 
   def store(self, url: str,  fetched_response: requests.Response):
@@ -24,7 +26,7 @@ class Storer:
       url (str): Fetched URL.
       fetched_response (requests.Response): Fetched HTML page.
     """
-    with open('example.warc.gz', 'ab') as output:
+    with open(f"file_{self.current_file_index}.warc.gz", 'ab') as output:
       writer = WARCWriter(output, gzip=True)
 
       html_content = fetched_response.text.encode("utf-8")  # Encode HTML as bytes
@@ -33,10 +35,13 @@ class Storer:
       http_headers = StatusAndHeaders('200 OK', headers_list, protocol='HTTP/1.0')
 
       record = writer.create_warc_record(url, 'response',
-                                          payload=io.BytesIO(html_content),
+                                          # payload=io.BytesIO(html_content), Commenting this just to make debugging easier
                                           http_headers=http_headers)
 
       writer.write_record(record)
 
-    # implement 1000 pages per file
-
+    self.pages_in_current_file += 1
+    if self.pages_in_current_file >= self.pages_per_file:
+      self.pages_in_current_file = 0
+      self.current_file_index += 1
+      
