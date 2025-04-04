@@ -1,7 +1,7 @@
-from crawler import frontier
-from crawler import fetcher
-from crawler import parser
-from crawler import storer
+from .fetcher import Fetcher
+from .parser import Parser
+from .storer import Storer
+from .frontier import Frontier
 
 """
 Crawler class for web crawling.
@@ -20,10 +20,10 @@ class Crawler:
     self.seeds = seeds
     self.limit = limit
     self.debug = debug
-    self.frontier = frontier.Frontier(seeds[:limit], debug)
-    self.fetcher = fetcher.Fetcher()
-    self.parser = parser.Parser()
-    self.storer = storer.Storer() 
+    self.frontier = Frontier(seeds[:limit], debug)
+    self.fetcher = Fetcher()
+    self.parser = Parser()
+    self.storer = Storer() 
 
   def crawl(self):
     """
@@ -39,10 +39,13 @@ class Crawler:
       ## Fetch the URL
       fetched_response = self.fetcher.fetch(next_url)
 
+      if fetched_response is None:
+        print(f"Failed to fetch {next_url}.")
+        continue
+
       ## Parse the content
       links = self.parser.parse(fetched_response.text)
-      print("Add these URLs to the frontier: ")
-      print(links)
+      self.frontier.add_links(links)
 
       ## Store the fetched fetched_response
       self.storer.store(next_url, fetched_response)

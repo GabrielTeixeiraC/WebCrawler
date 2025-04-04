@@ -1,5 +1,5 @@
 from utils import arg_parser
-from crawler import crawler as crawler_module
+from crawler.crawler import Crawler
 
 def main():
   """
@@ -21,7 +21,7 @@ def main():
 
   seeds = [seed.strip() for seed in seeds]
 
-  crawler = crawler_module.Crawler(seeds[:1], limit, debug)
+  crawler = Crawler(seeds, limit, debug)
   crawler.crawl()
 
 if __name__ == "__main__":

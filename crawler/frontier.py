@@ -34,3 +34,12 @@ class Frontier:
         bool: True if there are URLs left, False otherwise.
     """
     return not self._queue.empty()
+  
+  def add_links(self, links: list[str]):
+    """
+    Adds new links to the frontier.
+    Args:
+        links (list[str]): List of new links to be added.
+    """
+    for link in links:
+      self._queue.put(link)
