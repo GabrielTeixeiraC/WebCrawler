@@ -1,2 +1,4 @@
 /pa1/
 __pycache__
+*.warc
+*.gz
