@@ -1,4 +1,8 @@
 /pa1/
+/.vscode/
 __pycache__
 *.warc
 *.gz
+TODO.md
+Questions.md
+log.json
