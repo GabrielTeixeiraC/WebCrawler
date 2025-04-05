@@ -38,24 +38,25 @@ class Crawler:
 
     while self.frontier.has_urls() and self.limit > 0:
       ## Get the next URL
-      next_url = self.frontier.get_next_url()
+      page_url = self.frontier.get_next_url()
       
       timestamp = int(time.time())
       ## Fetch the URL
-      fetched_response = self.fetcher.fetch(next_url)
+      fetched_response = self.fetcher.fetch(page_url)
 
       if fetched_response is None:
-        print(f"Failed to fetch {next_url}.")
+        print(f"Failed to fetch {page_url}.")
         continue
-
-      self.logger.log(fetched_response, timestamp)
-
+      
       ## Parse the content
-      links = self.parser.parse(fetched_response.text)
+      links, title, first_visible_words = self.parser.parse(fetched_response.text)
+
+      self.logger.log(page_url, title, first_visible_words, timestamp)
+
       self.frontier.add_links(links)
 
       ## Store the fetched fetched_response
-      self.storer.store(next_url, fetched_response)
+      self.storer.store(page_url, fetched_response)
 
       ## Update the limit
       self.limit -= 1

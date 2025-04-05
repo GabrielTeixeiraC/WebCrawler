@@ -23,28 +23,23 @@ class Logger:
       with open(self.log_file, "w", encoding="utf-8") as f:
         f.write("[")
 
-  def log(self, fetched_response: requests.Response, timestamp: int):
+  def log(self, url: str, title: str, first_visible_words: str, timestamp: int):
     """
     Logs the fetched HTML page.
     Args:
-      fetched_response (requests.Response): Fetched HTML page.
+      url (str): URL of the fetched page.
+      title (str): Title of the fetched page.
+      first_visible_words (str): N first human-readable words from the page. N == 20 by default.
       timestamp (int): Timestamp for when the page was fetched.
     """
     if not self.debug:
       return
 
-    url = fetched_response.url
-    try:
-      title = fetched_response.text.split("<title>")[1].split("</title>")[0]
-    except IndexError:
-      title = "No title found"
-    text = fetched_response.text[:200]
-
     log_entry = {
-      "url": url,
-      "title": title,
-      "text": text,
-      "timestamp": timestamp
+      "URL": url,
+      "Title": title,
+      "Text": first_visible_words,
+      "Timestamp": timestamp
     }
     
     self.chunk.append(log_entry)
