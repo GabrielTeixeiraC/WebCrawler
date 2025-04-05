@@ -1,5 +1,4 @@
 import requests
-import io
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
 
@@ -13,7 +12,7 @@ class Storer:
     pages_per_file (int): Number of pages that will be stored in each WARC file.
     corpus_folder_path (str): Path for the folder where the WARC files will be stored
   """
-  def __init__(self, pages_per_file: int = 2, corpus_folder_path: str = "../corpus/"):
+  def __init__(self, pages_per_file: int = 2, corpus_folder_path: str = "./corpus/"):
     self.pages_per_file = pages_per_file
     self.pages_in_current_file = 0
     self.current_file_index = 0
@@ -26,7 +25,7 @@ class Storer:
       url (str): Fetched URL.
       fetched_response (requests.Response): Fetched HTML page.
     """
-    with open(f"file_{self.current_file_index}.warc.gz", 'ab') as output:
+    with open(f"{self.corpus_folder_path}file_{self.current_file_index}.warc.gz", 'ab') as output:
       writer = WARCWriter(output, gzip=True)
 
       html_content = fetched_response.text.encode("utf-8")  # Encode HTML as bytes
