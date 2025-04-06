@@ -1,8 +1,8 @@
 import requests
+
 """
 Fetcher class for sending HTTP requests while obying robots.txt rules and politeness policies.
 """
-
 class Fetcher:
   def __init__(self, request_delay_ms: int = 100):
     """
@@ -20,11 +20,14 @@ class Fetcher:
     Returns:
       response (request.Response): Content of the URL or None
     """
-    
     try:
-      print(f"Fetching {url}...")
       response = requests.get(url)
+      
       response.raise_for_status()
+     
+      if "text/html" not in response.headers.get("Content-Type", ""):
+        return None
+
       return response
     except requests.RequestException as e:
       print(f"Error occurred while fetching {url}: {e}")
