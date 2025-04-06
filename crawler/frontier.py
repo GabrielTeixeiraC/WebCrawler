@@ -1,8 +1,9 @@
 import queue
+from url_normalize import url_normalize
+
 """
 Frontier class for managing the frontier of URLs to be crawled and implementing revisitation policies.
 """
-
 class Frontier:
   def __init__(self, seeds: list[str], debug: bool):
     """
@@ -13,8 +14,8 @@ class Frontier:
     """
     self.debug = debug
     self._queue = queue.Queue()
-    for seed in seeds:
-      self._queue.put(seed)
+    self.visited = set()
+    self.add_links(seeds)
 
   def get_next_url(self) -> str:
     """
@@ -35,11 +36,22 @@ class Frontier:
     """
     return not self._queue.empty()
   
+  def add_link(self, link: str):
+    """
+    Adds a new link to the frontier. A revisitation policy is implemented to avoid adding duplicate links.
+    Args:
+      link (str): New link to be added.
+    """
+    normalized_link = url_normalize(link, filter_params=True)
+    if normalized_link not in self.visited:
+      self.visited.add(normalized_link)
+      self._queue.put(normalized_link)
+  
   def add_links(self, links: list[str]):
     """
-    Adds new links to the frontier.
+    Adds multiple links to the frontier.
     Args:
-        links (list[str]): List of new links to be added.
+      links (list[str]): List of new links to be added.
     """
     for link in links:
-      self._queue.put(link)
+      self.add_link(link)

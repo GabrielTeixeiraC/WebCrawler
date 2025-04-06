@@ -17,12 +17,12 @@ class Crawler:
     Initializes the Crawler class.
     Args:
       seeds (list[str]): List of seed URLs.
-      limit (int): Number of seeds to be used.
+      limit (int): Number of links to be crawled.
       debug (bool): Enable debug mode.
     """
     self.seeds = seeds
     self.limit = limit
-    self.frontier = Frontier(seeds[:limit], debug)
+    self.frontier = Frontier(seeds, debug)
     self.fetcher = Fetcher()
     self.parser = Parser()
     self.storer = Storer()
