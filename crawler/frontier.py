@@ -15,7 +15,7 @@ class Frontier:
     self._queue = queue.Queue()
     self.visited = set() 
     for seed in seeds:
-      normalized = url_normalize(seed, filter_params=True)
+      normalized = url_normalize(url=seed, filter_params=True)
       if normalized not in self.visited:
         self.visited.add(normalized)
         self._queue.put((normalized, 0))
@@ -50,7 +50,7 @@ class Frontier:
       return
     
     for link in links:
-      normalized_link = url_normalize(link, filter_params=True)
+      normalized_link = url_normalize(url=link, filter_params=True)
       if normalized_link not in self.visited:
         self.visited.add(normalized_link)
         self._queue.put((normalized_link, current_depth + 1))

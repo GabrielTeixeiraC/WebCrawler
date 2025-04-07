@@ -21,7 +21,7 @@ def main():
 
   seeds = [seed.strip() for seed in seeds]
 
-  crawler = Crawler(seeds, limit, debug)
+  crawler = Crawler(seeds=seeds, limit=limit, debug=debug)
   crawler.crawl()
 
 if __name__ == "__main__":

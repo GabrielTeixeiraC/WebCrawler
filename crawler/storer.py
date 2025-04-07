@@ -25,15 +25,15 @@ class Storer:
       url (str): Fetched URL.
       fetched_response (requests.Response): Fetched HTML page.
     """
-    with open(f"{self.corpus_folder_path}file_{self.current_file_index}.warc.gz", 'ab') as output:
-      writer = WARCWriter(output, gzip=True)
+    with open(file=f"{self.corpus_folder_path}file_{self.current_file_index}.warc.gz", mode='ab') as output:
+      writer = WARCWriter(filebuf=output, gzip=True)
 
       html_content = fetched_response.text.encode("utf-8")  # Encode HTML as bytes
       headers_list = fetched_response.raw.headers.items()
 
-      http_headers = StatusAndHeaders('200 OK', headers_list, protocol='HTTP/1.0')
+      http_headers = StatusAndHeaders(statusline='200 OK', headers=headers_list, protocol='HTTP/1.0')
 
-      record = writer.create_warc_record(url, 'response',
+      record = writer.create_warc_record(uri=url, record_type="application/http; msgtype=response",
                                           # payload=io.BytesIO(html_content), Commenting this just to make debugging easier
                                           http_headers=http_headers)
 

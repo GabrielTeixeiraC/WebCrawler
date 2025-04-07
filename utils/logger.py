@@ -1,4 +1,3 @@
-import requests
 import json
 
 """
@@ -20,16 +19,16 @@ class Logger:
 
     if self.debug:
       # Start the file with an opening bracket
-      with open(self.log_file, "w", encoding="utf-8") as f:
+      with open(file=self.log_file, mode="w", encoding="utf-8") as f:
         f.write("[")
 
-  def log(self, url: str, title: str, first_visible_words: str, timestamp: int):
+  def log(self, url: str, title: str, text: str, timestamp: int):
     """
     Logs the fetched HTML page.
     Args:
       url (str): URL of the fetched page.
       title (str): Title of the fetched page.
-      first_visible_words (str): N first human-readable words from the page. N == 20 by default.
+      text (str): Text from the fetched page.
       timestamp (int): Timestamp for when the page was fetched.
     """
     if not self.debug:
@@ -38,7 +37,7 @@ class Logger:
     log_entry = {
       "URL": url,
       "Title": title,
-      "Text": first_visible_words,
+      "Text": text,
       "Timestamp": timestamp
     }
     
@@ -61,7 +60,7 @@ class Logger:
       else:
         self.first_entry_written = True
 
-      entries = [json.dumps(entry, ensure_ascii=False, indent=2) for entry in self.chunk]
+      entries = [json.dumps(obj=entry, ensure_ascii=False, indent=2) for entry in self.chunk]
       f.write(",\n".join(entries))
     
     self.chunk = []

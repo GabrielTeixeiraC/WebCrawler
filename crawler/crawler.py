@@ -22,7 +22,7 @@ class Crawler:
     """
     self.seeds = seeds
     self.limit = limit
-    self.frontier = Frontier(seeds, 1) # TODO: remove max_depth
+    self.frontier = Frontier(seeds=seeds)
     self.fetcher = Fetcher()
     self.parser = Parser()
     self.storer = Storer()
@@ -42,21 +42,21 @@ class Crawler:
       timestamp = int(time.time())
       
       ## Fetch the URL
-      fetched_response = self.fetcher.fetch(page_url)
+      fetched_response = self.fetcher.fetch(url=page_url)
 
       if fetched_response is None:
         print(f"Failed to fetch {page_url}.")
         continue
       
       ## Parse the content
-      links, title, first_visible_words = self.parser.parse(fetched_response.text)
+      links, title, first_visible_words = self.parser.parse(html_content=fetched_response.text)
 
       self.logger.log(page_url, title, first_visible_words, timestamp)
 
       self.frontier.add_links(links=links, current_depth=depth)
 
       ## Store the fetched fetched_response
-      self.storer.store(page_url, fetched_response)
+      self.storer.store(url=page_url, fetched_response=fetched_response)
 
       ## Update the limit
       self.limit -= 1

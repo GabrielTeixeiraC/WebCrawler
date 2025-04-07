@@ -22,7 +22,7 @@ class Parser:
       title (str): Title of the page.
       first_visible_words (str): N first human-readable words from the page. N == 20 by default.
     """
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(markup=html_content, features='html.parser')
 
     # Extract all links that will be added to the frontier.
     links = soup.find_all('a')
