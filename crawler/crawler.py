@@ -39,10 +39,9 @@ class Crawler:
     while self.frontier.has_urls() and self.limit > 0:
       ## Get the next URL
       page_url, depth = self.frontier.get_next_url()
-      timestamp = int(time.time())
       
       ## Fetch the URL
-      fetched_response = self.fetcher.fetch(url=page_url)
+      fetched_response, timestamp = self.fetcher.fetch(url=page_url)
 
       if fetched_response is None:
         print(f"Failed to fetch {page_url}.")
@@ -62,3 +61,4 @@ class Crawler:
       self.limit -= 1
 
     self.logger.end_log()
+    self.fetcher.close()
