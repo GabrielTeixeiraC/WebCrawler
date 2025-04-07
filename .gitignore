@@ -1,5 +1,6 @@
 /pa1/
 /.vscode/
+/debug_results/
 __pycache__
 *.warc
 *.gz
