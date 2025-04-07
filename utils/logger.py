@@ -1,4 +1,5 @@
 import json
+import queue
 import threading
 
 """
@@ -8,21 +9,26 @@ class Logger:
   """
   Initializes the Logger class.
   Args:
+    debug (bool): Enable debug mode.
     log_file (str): Path for the log file.
-    max_chunk_size (int): Maximum number of in-memory cached entries.
+    flush_interval (float): Interval for flushing the log entries to the file.
   """
-  def __init__(self, debug: bool = False, log_file: str = "log.json", max_chunk_size: int = 2):
+  def __init__(self, debug: bool = False, log_file: str = "log.json", flush_interval: float = 1.0):
     self.debug = debug
     self.log_file = log_file
-    self.max_chunk_size = max_chunk_size
+    self.flush_interval = flush_interval
+    self.stop_event = threading.Event()
+    self.queue = queue.Queue()
     self.lock = threading.Lock()
-    self.chunk = []
     self.first_entry_written = False
 
     if self.debug:
       # Start the file with an opening bracket
       with open(file=self.log_file, mode="w", encoding="utf-8") as f:
         f.write("[")
+
+      self.worker_thread = threading.Thread(target=self._log_worker, name="LoggerThread", daemon=True)
+      self.worker_thread.start()
 
   def log(self, url: str, title: str, text: str, timestamp: int):
     """
@@ -43,29 +49,40 @@ class Logger:
       "Timestamp": timestamp
     }
     
-    with self.lock:
-      self.chunk.append(log_entry)
-      if len(self.chunk) >= self.max_chunk_size:
-        self.write_logs()
+    self.queue.put(log_entry)
 
-  def write_logs(self):
+  def _log_worker(self):
+    """
+    Worker thread for logging.
+    This method continuously checks the queue for new log entries and writes them to the log file.
+    """
+    buffer = []
+
+    while not self.stop_event.is_set() or not self.queue.empty():
+        try:
+            log_entry = self.queue.get(timeout=self.flush_interval)
+            buffer.append(log_entry)
+        except queue.Empty:
+            pass
+
+        if buffer:
+            self._flush(entries=buffer)
+            buffer.clear()
+
+  def _flush(self, entries):
     """
     Writes the logs to the log file.
     This method writes the collected logs to the log file in JSON format.
     """
-    if not self.chunk:
-        return
+    with self.lock:
+      with open(self.log_file, "a", encoding="utf-8") as f:
+        if self.first_entry_written:
+          f.write(",\n")
+        else:
+          self.first_entry_written = True
 
-    with open(self.log_file, "a", encoding="utf-8") as f:
-      if self.first_entry_written:
-        f.write(",\n")
-      else:
-        self.first_entry_written = True
-
-      entries = [json.dumps(obj=entry, ensure_ascii=False, indent=2) for entry in self.chunk]
-      f.write(",\n".join(entries))
-    
-    self.chunk = []
+        json_entries = [json.dumps(entry, ensure_ascii=False, indent=2) for entry in entries]
+        f.write(",\n".join(json_entries))
 
   def end_log(self):
     """
@@ -73,9 +90,10 @@ class Logger:
     This method closes the log file and adds a closing bracket.
     """
     if not self.debug:
-      return
-    
-    self.write_logs()
+        return
+
+    self.stop_event.set()
+    self.worker_thread.join()
 
     with open(self.log_file, "a", encoding="utf-8") as f:
-      f.write("]\n")
+        f.write("]\n")
