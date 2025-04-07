@@ -73,7 +73,7 @@ class Fetcher:
     user_agent = self.session.headers["User-Agent"] 
     
     if not robots_parser.can_fetch(url=url, user_agent=user_agent):
-      return None 
+      return None, None 
 
     crawl_delay_seconds = robots_parser.crawl_delay(user_agent=user_agent)
     crawl_delay = crawl_delay_seconds if crawl_delay_seconds is not None else self.default_crawl_delay_ms / 1000
@@ -86,12 +86,12 @@ class Fetcher:
       response.raise_for_status()
      
       if "text/html" not in response.headers.get("Content-Type", ""):
-        return None
+        return None, None
 
       return response, timestamp
     except requests.RequestException as e:
       print(f"Error occurred while fetching {url}: {e}")
-      return None
+      return None, None
 
   def close(self):
     """

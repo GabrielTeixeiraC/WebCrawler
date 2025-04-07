@@ -1,4 +1,5 @@
 import json
+import threading
 
 """
 Logger class for logging the fetched pages.
@@ -14,6 +15,7 @@ class Logger:
     self.debug = debug
     self.log_file = log_file
     self.max_chunk_size = max_chunk_size
+    self.lock = threading.Lock()
     self.chunk = []
     self.first_entry_written = False
 
@@ -41,17 +43,17 @@ class Logger:
       "Timestamp": timestamp
     }
     
-    self.chunk.append(log_entry)
-
-    if len(self.chunk) >= self.max_chunk_size:
-      self.write_logs()
+    with self.lock:
+      self.chunk.append(log_entry)
+      if len(self.chunk) >= self.max_chunk_size:
+        self.write_logs()
 
   def write_logs(self):
     """
     Writes the logs to the log file.
     This method writes the collected logs to the log file in JSON format.
     """
-    if not self.debug or not self.chunk:
+    if not self.chunk:
         return
 
     with open(self.log_file, "a", encoding="utf-8") as f:
