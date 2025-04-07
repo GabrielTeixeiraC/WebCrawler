@@ -12,7 +12,7 @@ class Storer:
     pages_per_file (int): Number of pages that will be stored in each WARC file.
     corpus_folder_path (str): Path for the folder where the WARC files will be stored
   """
-  def __init__(self, pages_per_file: int = 2, corpus_folder_path: str = "./corpus/"):
+  def __init__(self, pages_per_file: int = 100, corpus_folder_path: str = "./corpus/"):
     self.pages_per_file = pages_per_file
     self.pages_in_current_file = 0
     self.current_file_index = 0

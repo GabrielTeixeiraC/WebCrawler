@@ -13,7 +13,7 @@ This class is responsible for managing the crawling process, including
 fetching URLs, parsing content, and storing results.
 """
 class Crawler:
-  def __init__(self, seeds: list[str], limit: int, debug: bool, thread_count: int = 10):
+  def __init__(self, seeds: list[str], limit: int, debug: bool, thread_count: int = 100):
     """
     Initializes the Crawler class.
     Args:
