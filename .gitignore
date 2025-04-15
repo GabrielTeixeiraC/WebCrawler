@@ -6,4 +6,5 @@ __pycache__
 *.gz
 TODO.md
 Questions.md
-log.json
+log.jsonl
+error.log
