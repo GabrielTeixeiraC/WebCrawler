@@ -34,7 +34,11 @@ class Parser:
     urls = soup.find_all('a')
 
     # Extract the title and the first N human-readable words for logging.
-    title = soup.title.string if soup.title else "No title found"
+    title = "No title found"
+    title_tag = soup.title
+    if title_tag and title_tag.string:
+      title = title_tag.string.strip()
+
     self.title = title
     first_visible_words = self.extract_first_visible_words(soup_object=soup)
 
