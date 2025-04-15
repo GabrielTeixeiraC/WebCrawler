@@ -86,7 +86,8 @@ class Fetcher:
     try:
       timestamp = int(time.time())
       response = self.session.get(url)
-      
+      response.encoding = 'utf-8'
+ 
       response.raise_for_status()
      
       if "text/html" not in response.headers.get("Content-Type", ""):
