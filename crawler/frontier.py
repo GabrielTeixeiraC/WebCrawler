@@ -6,13 +6,16 @@ from urllib3.util import parse_url
 Frontier class for managing the frontier of URLs to be crawled and implementing revisitation policies.
 """
 class Frontier:
-  def __init__(self, seeds: list[str], max_depth: int | None = None):
+  def __init__(self, seeds: list[str], max_depth: int | None = None, timeout: float = 3.0):
     """
     Initializes the Frontier class.
     Args:
-        seeds (list[str]): List of seed URLs.
+      seeds (list[str]): List of seed URLs.
+      max_depth (int | None): Maximum depth for crawling. If None, no limit is set.
+      timeout (float): Timeout for getting URLs from the queue.
     """
     self.max_depth = max_depth
+    self.timeout = timeout
     self._queue = queue.Queue()
     self.visited = set() 
     for seed in seeds:
@@ -22,19 +25,20 @@ class Frontier:
     """
     Gets the next URL from the frontier.
     Returns:
-        str: Next URL to be crawled.
-        depth: Depth of the URL to be crawled.
+      str: Next URL to be crawled.
+      depth: Depth of the URL to be crawled.
     """
-    if not self._queue.empty():
-      next_url, depth = self._queue.get()
-      return next_url, depth 
-    return None, None
+    try:
+      next_url, depth = self._queue.get(timeout=self.timeout)
+      return next_url, depth
+    except queue.Empty:
+      return None, None
     
   def has_urls(self) -> bool:
     """
     Checks if there are more URLs to crawl.
     Returns:
-        bool: True if there are URLs left, False otherwise.
+      bool: True if there are URLs left, False otherwise.
     """
     return not self._queue.empty()
   
