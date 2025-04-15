@@ -2,6 +2,7 @@ import time
 import requests
 
 from urllib3.util import parse_url
+from urllib3.exceptions import LocationParseError
 from protego import Protego
 
 """
@@ -32,10 +33,13 @@ class Fetcher:
     Returns:
       str: Domain name. Returns None if the URL is invalid.
     """
-    parsed = parse_url(url)
-    if not parsed.scheme or not parsed.host:
+    try:
+      parsed = parse_url(url)
+
+      return f"{parsed.scheme}://{parsed.host}"
+    except LocationParseError:
+      print(f"Invalid URL: {url}")
       return None
-    return f"{parsed.scheme}://{parsed.host}"
   
   def get_robots_parser(self, url: str) -> Protego:
     """

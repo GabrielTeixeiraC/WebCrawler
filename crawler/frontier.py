@@ -1,5 +1,6 @@
 import queue
 from url_normalize import url_normalize
+from urllib3.util import parse_url
 
 """
 Frontier class for managing the frontier of URLs to be crawled and implementing revisitation policies.
@@ -15,10 +16,7 @@ class Frontier:
     self._queue = queue.Queue()
     self.visited = set() 
     for seed in seeds:
-      normalized = url_normalize(url=seed, filter_params=True)
-      if normalized not in self.visited:
-        self.visited.add(normalized)
-        self._queue.put((normalized, 0))
+      self.add_url(seed, depth=0)
 
   def get_next_url(self) -> tuple[str, int] | tuple[None, None]:
     """
@@ -40,17 +38,39 @@ class Frontier:
     """
     return not self._queue.empty()
   
-  def add_links(self, links: list[str], current_depth: int = 0):
+  def add_url(self, url: str, depth: int):
     """
-    Adds multiple links to the frontier.
+    Adds a new URL to the frontier.
     Args:
-      links (list[str]): List of new links to be added.
+      url (str): New URL to be added.
     """
-    if self.max_depth is not None and current_depth + 1 > self.max_depth:
+    if self.max_depth is not None and depth + 1 > self.max_depth:
       return
-    
-    for link in links:
-      normalized_link = url_normalize(url=link, filter_params=True)
-      if normalized_link not in self.visited:
-        self.visited.add(normalized_link)
-        self._queue.put((normalized_link, current_depth + 1))
+
+    try:
+      parsed_url = parse_url(url)
+      
+      if not parsed_url.scheme or not parsed_url.host:
+        return
+      
+      if parsed_url.scheme not in ["http", "https"]:
+        return    
+    except Exception as e:
+      print(f"Failed to parse URL {url}: {e}")
+      return    
+
+    normalized_url = url_normalize(url=str(parsed_url), filter_params=True)
+
+    if normalized_url not in self.visited:
+      self.visited.add(normalized_url)
+      self._queue.put((normalized_url, depth + 1))
+
+  
+  def add_urls(self, urls: list[str], current_depth: int = 0):
+    """
+    Adds multiple URLs to the frontier.
+    Args:
+      urls (list[str]): List of new URLs to be added.
+    """
+    for url in urls:
+      self.add_url(url, depth=current_depth + 1)

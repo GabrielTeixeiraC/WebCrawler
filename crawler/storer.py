@@ -1,3 +1,4 @@
+import io
 import requests
 from warcio.warcwriter import WARCWriter
 from warcio.statusandheaders import StatusAndHeaders
@@ -18,23 +19,24 @@ class Storer:
     self.current_file_index = 0
     self.corpus_folder_path = corpus_folder_path
 
-  def store(self, url: str,  fetched_response: requests.Response):
+  def store(self, url: str, html_content: str, fetched_response: requests.Response):
     """
     Stores the fetched HTML page to a WARC file. Each WARC file has 1000 pages.
     Args:
       url (str): Fetched URL.
-      fetched_response (requests.Response): Fetched HTML page.
+      html_content (str): Fetched page's HTML content.
+      fetched_response (requests.Response): Fetched page's response object.
     """
     with open(file=f"{self.corpus_folder_path}file_{self.current_file_index}.warc.gz", mode='ab') as output:
       writer = WARCWriter(filebuf=output, gzip=True)
 
-      html_content = fetched_response.text.encode("utf-8")  # Encode HTML as bytes
+      encoded_html_content = html_content.encode("utf-8")  # Encode HTML as bytes
       headers_list = fetched_response.raw.headers.items()
 
       http_headers = StatusAndHeaders(statusline='200 OK', headers=headers_list, protocol='HTTP/1.0')
 
       record = writer.create_warc_record(uri=url, record_type="application/http; msgtype=response",
-                                          # payload=io.BytesIO(html_content), Commenting this just to make debugging easier
+                                          payload=io.BytesIO(encoded_html_content),
                                           http_headers=http_headers)
 
       writer.write_record(record)

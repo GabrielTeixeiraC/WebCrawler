@@ -60,14 +60,14 @@ class Crawler:
         continue
 
       ## Parse the content
-      links, title, first_visible_words = self.parser.parse(html_content=fetched_response.text)
+      html_content, urls, title, first_visible_words = self.parser.parse(html_content=fetched_response.text)
 
       self.logger.log(page_url, title, first_visible_words, timestamp)
 
-      self.frontier.add_links(links=links, current_depth=depth)
+      self.frontier.add_urls(urls=urls, current_depth=depth)
 
       ## Store the fetched fetched_response
-      self.storer.store(url=page_url, fetched_response=fetched_response)
+      self.storer.store(url=page_url, html_content=html_content, fetched_response=fetched_response)
 
       ## Update the limit
       with self.limit_lock:
