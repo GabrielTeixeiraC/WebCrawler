@@ -63,7 +63,11 @@ class Frontier:
       print(f"Failed to parse URL {url}: {e}")
       return    
 
-    normalized_url = url_normalize(url=str(parsed_url), filter_params=True)
+    try:
+        normalized_url = url_normalize(url=str(parsed_url), filter_params=True)
+    except Exception as e:
+        print(f"Failed to normalize URL {url}: {e}")
+        return
 
     if normalized_url not in self.visited:
       self.visited.add(normalized_url)
