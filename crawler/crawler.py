@@ -1,5 +1,6 @@
 import time
 import threading
+import traceback
 
 from .fetcher import Fetcher
 from .parser import Parser
@@ -30,7 +31,9 @@ class Crawler:
     self.storer = Storer()
     self.logger = Logger(debug=debug)
     self.limit_lock = threading.Lock()
-    self.frontier_lock = threading.Lock()
+    self.stop_signal = threading.Event()
+    with open("error.log", "w") as f:
+      f.write("Error log initialized.\n")
 
   def crawl_worker(self):
     """
@@ -39,39 +42,49 @@ class Crawler:
     and stores the results. It continues until the limit is reached or
     there are no more URLs to crawl.
     """
+    thread_name = threading.current_thread().name
+    MAX_LENGTH = 500 # Maximum length for title and first visible words
+    empty_retries = 0
+    MAX_EMPTY_RETRIES = 5  # Number of times a thread will retry when the queue is empty
 
-    while True:
-      with self.limit_lock:
-        if self.limit <= 0:
-          break
+    try:
+      while not self.stop_signal.is_set():
+        with self.limit_lock:
+          if self.limit <= 0:
+            self.stop_signal.set()
+            break
 
-      with self.frontier_lock:
-        if not self.frontier.has_urls():
-          break
+        page_url, depth = self.frontier.get_next_url(self.stop_signal)
+        print(f"[{thread_name}] Queue size: {self.frontier._queue.qsize()}")
         
-        ## Get the next URL
-        page_url, depth = self.frontier.get_next_url()
+        if page_url is None:
+          empty_retries += 1
+          if empty_retries >= MAX_EMPTY_RETRIES:
+            print(f"[{thread_name}] Exiting after {MAX_EMPTY_RETRIES} empty retries.")
+            break
+          continue
 
-      ## Fetch the URL
-      fetched_response, timestamp = self.fetcher.fetch(url=page_url)
-    
-      if fetched_response is None:
-        print(f"Failed to fetch {page_url}.")
-        continue
+        fetched_response, timestamp = self.fetcher.fetch(url=page_url)
 
-      ## Parse the content
-      html_content, urls, title, first_visible_words = self.parser.parse(html_content=fetched_response.text)
+        if fetched_response is None:
+          continue
 
-      self.logger.log(page_url, title, first_visible_words, timestamp)
+        html_content, urls, title, first_visible_words = self.parser.parse(html_content=fetched_response.text)
+        truncated_title = title[:MAX_LENGTH] if len(title) > MAX_LENGTH else title
+        truncated_first_visible_words = first_visible_words[:MAX_LENGTH] if len(first_visible_words) > MAX_LENGTH else first_visible_words
 
-      self.frontier.add_urls(urls=urls, current_depth=depth)
+        self.logger.log(page_url, truncated_title, truncated_first_visible_words, timestamp)
+        self.frontier.add_urls(urls=urls, current_depth=depth)
+        self.storer.store(url=page_url, html_content=html_content, fetched_response=fetched_response)
 
-      ## Store the fetched fetched_response
-      self.storer.store(url=page_url, html_content=html_content, fetched_response=fetched_response)
+        empty_retries = 0
+        with self.limit_lock:
+          self.limit -= 1
 
-      ## Update the limit
-      with self.limit_lock:
-        self.limit -= 1
+    except Exception as e:
+      stack_trace = traceback.format_exc()  # Get full stack trace
+      with open("error.log", "a") as f:
+        f.write(f"[{thread_name}], Page URL: {page_url}, Error: {stack_trace}\n")
 
   def crawl(self):
     """
@@ -82,10 +95,15 @@ class Crawler:
     """
     threads = []
 
-    for _ in range(self.thread_count):
-      thread = threading.Thread(target=self.crawl_worker)
+    for i in range(self.thread_count):
+      thread = threading.Thread(target=self.crawl_worker, name=f"CrawlerThread-{i}")
       thread.start()
       threads.append(thread)
+    
+    while any(t.is_alive() for t in threads):
+      active_crawlers = [t for t in threading.enumerate() if t.name.startswith("CrawlerThread")]
+      print(f"Active crawler threads: {len(active_crawlers)}, Limit: {self.limit}")
+      time.sleep(5)  # Monitor threads every 5 seconds
 
     for thread in threads:
       thread.join()

@@ -85,7 +85,7 @@ class Fetcher:
 
     try:
       timestamp = int(time.time())
-      response = self.session.get(url)
+      response = self.session.get(url, timeout=5)
       response.encoding = 'utf-8'
  
       response.raise_for_status()

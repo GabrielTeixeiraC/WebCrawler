@@ -1,4 +1,6 @@
 import queue
+import threading
+
 from url_normalize import url_normalize
 from urllib3.util import parse_url
 
@@ -21,7 +23,7 @@ class Frontier:
     for seed in seeds:
       self.add_url(seed, depth=0)
 
-  def get_next_url(self) -> tuple[str, int] | tuple[None, None]:
+  def get_next_url(self, stop_signal: threading.Event | None = None) -> tuple[str, int] | tuple[None, None]:
     """
     Gets the next URL from the frontier.
     Returns:
@@ -29,6 +31,8 @@ class Frontier:
       depth: Depth of the URL to be crawled.
     """
     try:
+      if stop_signal is not None and stop_signal.is_set():
+        return None, None
       next_url, depth = self._queue.get(timeout=self.timeout)
       return next_url, depth
     except queue.Empty:
