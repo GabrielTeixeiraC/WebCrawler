@@ -35,7 +35,7 @@ class Fetcher:
     """
     try:
       parsed = parse_url(url)
-
+      
       return f"{parsed.scheme}://{parsed.host}"
     except LocationParseError:
       print(f"Invalid URL: {url}")
@@ -59,7 +59,8 @@ class Fetcher:
         response = self.session.get(robots_url)
         response.raise_for_status()
         self.robots_parsers[domain] = Protego.parse(content=response.text)
-      except requests.RequestException as e:
+      except Exception as e:
+        print(f"Error occurred while parsing robots.txt for {domain}: {e}")
         self.robots_parsers[domain] = Protego()
     return self.robots_parsers[domain]
 
@@ -94,7 +95,7 @@ class Fetcher:
         return None, None
 
       return response, timestamp
-    except requests.RequestException as e:
+    except Exception as e:
       print(f"Error occurred while fetching {url}: {e}")
       return None, None
 
