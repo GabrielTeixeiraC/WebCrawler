@@ -27,12 +27,12 @@ class Crawler:
     self.thread_count = thread_count
     self.frontier = Frontier(seeds=seeds)
     self.fetcher = Fetcher()
-    self.parser = Parser()
+    self.parser = Parser(debug=debug)
     self.storer = Storer()
     self.logger = Logger(debug=debug)
     self.limit_lock = threading.Lock()
     self.stop_signal = threading.Event()
-    with open("error.log", "w") as f:
+    with open("tmp/error.log", "w") as f:
       f.write("Error log initialized.\n")
 
   def crawl_worker(self):
@@ -43,7 +43,6 @@ class Crawler:
     there are no more URLs to crawl.
     """
     thread_name = threading.current_thread().name
-    MAX_LENGTH = 500 # Maximum length for title and first visible words
     empty_retries = 0
     MAX_EMPTY_RETRIES = 5  # Number of times a thread will retry when the queue is empty
 
@@ -70,12 +69,12 @@ class Crawler:
           continue
 
         html_content, urls, title, first_visible_words = self.parser.parse(html_content=fetched_response.text)
-        truncated_title = title[:MAX_LENGTH] if len(title) > MAX_LENGTH else title
-        truncated_first_visible_words = first_visible_words[:MAX_LENGTH] if len(first_visible_words) > MAX_LENGTH else first_visible_words
 
-        self.logger.log(page_url, truncated_title, truncated_first_visible_words, timestamp)
-        self.frontier.add_urls(urls=urls, current_depth=depth)
         self.storer.store(url=page_url, html_content=html_content, fetched_response=fetched_response)
+        
+        self.logger.log(page_url, title, first_visible_words, timestamp)
+
+        self.frontier.add_urls(urls=urls, current_depth=depth)
 
         empty_retries = 0
         with self.limit_lock:
@@ -83,7 +82,7 @@ class Crawler:
 
     except Exception as e:
       stack_trace = traceback.format_exc()  # Get full stack trace
-      with open("error.log", "a") as f:
+      with open("tmp/error.log", "a") as f:
         f.write(f"[{thread_name}], Page URL: {page_url}, Error: {stack_trace}\n")
 
   def crawl(self):
