@@ -30,7 +30,7 @@ class Storer:
     with open(file=f"{self.corpus_folder_path}file_{self.current_file_index}.warc.gz", mode='ab') as output:
       writer = WARCWriter(filebuf=output, gzip=True)
 
-      encoded_html_content = html_content.encode("utf-8")  # Encode HTML as bytes
+      encoded_html_content = html_content.encode("utf-8", errors='replace')
       headers_list = fetched_response.raw.headers.items()
 
       http_headers = StatusAndHeaders(statusline='200 OK', headers=headers_list, protocol='HTTP/1.0')
