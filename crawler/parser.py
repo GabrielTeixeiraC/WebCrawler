@@ -4,15 +4,18 @@ from bs4 import BeautifulSoup
 Parser class to parse HTML content using BeautifulSoup.
 """
 class Parser:
-  def __init__(self, number_of_extracted_words: int = 20):
+  def __init__(self, number_of_extracted_words: int = 20, debug: bool = False):
     """
     Initializes the Parser class.
     Args:
       number_of_extracted_words (int): Number of human-readable words to extract from the page.
+      debug (bool): Enable debug mode.
     """
     self.number_of_extracted_words = number_of_extracted_words
+    self.debug = debug
+    self.max_length = 500 # Maximum length for title and first visible words
 
-  def parse(self, html_content: str) -> tuple[str, list[str], str, str]:
+  def parse(self, html_content: str) -> tuple[str, list[str], str | None, str | None]:
     """
     Parses HTML content and extracts all links.
     Args:
@@ -20,8 +23,8 @@ class Parser:
     Returns:
       html_content (str): Parsed HTML content.
       urls (list[str]): List of extracted links.
-      title (str): Title of the page.
-      first_visible_words (str): N first human-readable words from the page. N == 20 by default.
+      title (str | None): Title of the page. None if debug is disabled.
+      first_visible_words (str | None): N first human-readable words from the page. N == 20 by default. None if debug is disabled.
     """
     soup = BeautifulSoup(markup=html_content, features='html.parser')
 
@@ -32,18 +35,35 @@ class Parser:
     
     # Extract all URLs that will be added to the frontier.
     urls = soup.find_all('a')
+    urls = [url.get('href') for url in urls if url.get('href') is not None]
 
-    # Extract the title and the first N human-readable words for logging.
+    if not self.debug:
+      return html_content, urls, None, None
+    
+    title = self.extract_title(soup_object=soup)
+    truncated_title = title[:self.max_length] if len(title) > self.max_length else title
+
+    first_visible_words = self.extract_first_visible_words(soup_object=soup)
+    truncated_first_visible_words = first_visible_words[:self.max_length] if len(first_visible_words) > self.max_length else first_visible_words
+
+    return html_content, urls, truncated_title, truncated_first_visible_words
+
+  def extract_title(self, soup_object: BeautifulSoup) -> str:
+    """
+    Extract the title and the first N human-readable words for logging. 
+    Args:
+      soup_object (BeautifulSoup): BeautifulSoup object containing the parsed HTML content.
+    Returns:
+      str: Title of the page.
+    """
     title = "No title found"
-    title_tag = soup.title
+    title_tag = soup_object.title
+
     if title_tag and title_tag.string:
       title = title_tag.string.strip()
-
-    self.title = title
-    first_visible_words = self.extract_first_visible_words(soup_object=soup)
-
-    return html_content, [url.get('href') for url in urls if url.get('href') is not None], title, first_visible_words
- 
+    
+    return title
+  
   def extract_first_visible_words(self, soup_object: BeautifulSoup) -> str:
     """
     Extracts the first N human-readable words from the parsed HTML content.
