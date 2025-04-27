@@ -109,3 +109,4 @@ class Crawler:
     
     self.logger.end_log()
     self.fetcher.close()
+    self.storer.finish()
