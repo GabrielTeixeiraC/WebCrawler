@@ -63,9 +63,7 @@ class Fetcher:
 
         # Parse robots.txt content and cache it
         self.robots_parsers[domain] = Protego.parse(content=response.text)
-      except Exception as e:
-        print(f"Error occurred while parsing robots.txt for {domain}: {e}")
-
+      except Exception:
         # On any error, assume no restrictions
         self.robots_parsers[domain] = Protego()
     return self.robots_parsers[domain]
