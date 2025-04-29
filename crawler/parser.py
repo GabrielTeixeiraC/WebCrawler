@@ -56,7 +56,7 @@ class Parser:
 
   def extract_title(self, soup_object: BeautifulSoup) -> str:
     """
-    Extract the title and the first N human-readable words for logging. 
+    Extract the title from the page for logging. 
     Args:
       soup_object (BeautifulSoup): BeautifulSoup object containing the parsed HTML content.
     Returns:
