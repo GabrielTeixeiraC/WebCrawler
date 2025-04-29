@@ -18,8 +18,8 @@ class Frontier:
     """
     self.max_depth = max_depth
     self.timeout = timeout
-    self._queue = queue.Queue()
-    self.visited = set() 
+    self._queue = queue.Queue() # Queue to manage the frontier
+    self.visited = set() # Set to track visited URLs (avoid duplicates)
     for seed in seeds:
       self.add_url(seed, depth=0)
 
@@ -31,11 +31,15 @@ class Frontier:
       depth: Depth of the URL to be crawled.
     """
     try:
+      # If a stop signal is provided and triggered, return None immediately
       if stop_signal is not None and stop_signal.is_set():
         return None, None
+
+      # Try to get the next URL and its depth
       next_url, depth = self._queue.get(timeout=self.timeout)
       return next_url, depth
     except queue.Empty:
+      # If no URL is available within the timeout, return None
       return None, None
     
   def has_urls(self) -> bool:
@@ -52,15 +56,18 @@ class Frontier:
     Args:
       url (str): New URL to be added.
     """
+    # Check depth constraint
     if self.max_depth is not None and depth + 1 > self.max_depth:
       return
 
     try:
+      # Validate that the URL has a proper scheme and host
       parsed_url = parse_url(url)
       
       if not parsed_url.scheme or not parsed_url.host:
         return
-      
+
+      # Accept only HTTP or HTTPS URLs
       if parsed_url.scheme not in ["http", "https"]:
         return    
     except Exception as e:
@@ -68,11 +75,13 @@ class Frontier:
       return    
 
     try:
-        normalized_url = url_normalize(url=str(parsed_url), filter_params=True)
+      # Normalize the URL (remove redundant parameters, unify formatting)
+      normalized_url = url_normalize(url=str(parsed_url), filter_params=True)
     except Exception as e:
         print(f"Failed to normalize URL {url}: {e}")
         return
 
+    # Only add the URL if it has not been visited before
     if normalized_url not in self.visited:
       self.visited.add(normalized_url)
       self._queue.put((normalized_url, depth + 1))

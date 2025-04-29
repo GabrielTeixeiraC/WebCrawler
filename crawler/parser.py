@@ -26,11 +26,14 @@ class Parser:
       title (str | None): Title of the page. None if debug is disabled.
       first_visible_words (str | None): N first human-readable words from the page. N == 20 by default. None if debug is disabled.
     """
+    # Create BeautifulSoup object
     soup = BeautifulSoup(markup=html_content, features='html.parser')
 
+    # Remove non-visible content: scripts, styles, templates
     for tags_to_decompose in soup(['script', 'style', 'template']):
       tags_to_decompose.decompose()
 
+    # Prettify the HTML (format it nicely)
     html_content = soup.prettify()
     
     # Extract all URLs that will be added to the frontier.
@@ -38,11 +41,14 @@ class Parser:
     urls = [url.get('href') for url in urls if url.get('href') is not None]
 
     if not self.debug:
+      # If not in debug mode, return only HTML and URLs
       return html_content, urls, None, None
-    
+
+    # If in debug mode, also extract and truncate the title
     title = self.extract_title(soup_object=soup)
     truncated_title = title[:self.max_length] if len(title) > self.max_length else title
 
+    # Extract and truncate the first N human-readable words
     first_visible_words = self.extract_first_visible_words(soup_object=soup)
     truncated_first_visible_words = first_visible_words[:self.max_length] if len(first_visible_words) > self.max_length else first_visible_words
 
@@ -72,6 +78,7 @@ class Parser:
     Returns:
       str: First N human-readable words from the page.
     """
+    # Get all visible text from the page
     text = soup_object.get_text()
     
     # Split into words and take the first N

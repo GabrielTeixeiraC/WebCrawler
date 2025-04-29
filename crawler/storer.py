@@ -26,6 +26,7 @@ class Storer:
     self.writer = None
     self.lock = threading.Lock()
 
+    # Ensure that the output directory exists
     os.makedirs(self.corpus_folder_path, exist_ok=True)
     self.open_new_file()
 
@@ -36,8 +37,10 @@ class Storer:
     if self.output_file:
       self.output_file.close()
 
+    # Create the path for the next WARC file
     warc_path = f"{self.corpus_folder_path}file_{self.current_file_index}.warc.gz"
     self.output_file = open(warc_path, 'wb')
+    # Create a new WARC writer that compresses the output
     self.writer = WARCWriter(filebuf=self.output_file, gzip=True)
 
   def store(self, url: str, html_content: str, fetched_response: requests.Response):
@@ -50,13 +53,17 @@ class Storer:
     """
     with self.lock:
       if self.finished:
+        # Prevent writing if storage has been finalized
         return
 
+      # Encode HTML content safely
       encoded_html_content = html_content.encode("utf-8", errors='replace')
       headers_list = fetched_response.raw.headers.items()
 
+      # Create HTTP headers for the WARC record
       http_headers = StatusAndHeaders(statusline="200 OK", headers=headers_list, protocol="HTTP/1.0")
 
+      # Create a WARC "response" record
       record = self.writer.create_warc_record(
         uri=url,
         record_type="response",
@@ -64,10 +71,12 @@ class Storer:
         http_headers=http_headers
       )
 
+      # Write the WARC record to the file
       self.writer.write_record(record)
 
       self.pages_in_current_file += 1
 
+      # Rotate file if maximum pages per file reached
       if self.pages_in_current_file >= self.pages_per_file:
         self.pages_in_current_file = 0
         self.current_file_index += 1

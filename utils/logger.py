@@ -15,16 +15,19 @@ class Logger:
   """
   def __init__(self, debug: bool = False, log_file_path: str = "tmp/log.jsonl", flush_interval: float = 3.0):
     self.debug = debug
-    self.log_file_path =log_file_path 
+    self.log_file_path=log_file_path 
     self.flush_interval = flush_interval
-    self.chunk = []
-    self.lock = threading.Lock()
-    self.stop_event = threading.Event()
+    self.chunk = []   # Temporary storage for log entries before writing to disk
+    self.lock = threading.Lock()  # Lock to ensure thread-safe access to 'chunk'
+    self.stop_event = threading.Event()   # Event to signal the logging thread to stop
+
 
     if self.debug:
+      # Create/clear the log file initially
       with open(file=self.log_file_path, mode="w", encoding="utf-8") as f:
         pass
 
+      # Start the background worker thread responsible for flushing logs
       self.worker_thread = threading.Thread(target=self._log_worker, name="LoggerThread", daemon=True)
       self.worker_thread.start()
 
@@ -40,6 +43,7 @@ class Logger:
     if not self.debug:
       return
 
+    # Structure of a single log entry
     log_entry = {
       "URL": url,
       "Title": title,
@@ -47,6 +51,7 @@ class Logger:
       "Timestamp": timestamp
     }
 
+    # Add the log entry to the in-memory chunk in a thread-safe way
     with self.lock:
       self.chunk.append(log_entry)
 
@@ -58,7 +63,7 @@ class Logger:
       time.sleep(self.flush_interval)
       self.write_logs()
 
-    # Final flush when stopping
+    # Final flush before exiting the thread
     self.write_logs()
 
   def write_logs(self):
@@ -74,6 +79,7 @@ class Logger:
           json.dump(entry, f, ensure_ascii=False)
           f.write("\n")
 
+      # Clear chunk after writing
       self.chunk = []
 
   def end_log(self):
