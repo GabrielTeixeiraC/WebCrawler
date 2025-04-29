@@ -66,7 +66,7 @@ The \texttt{Parser} class extracts links and the HTML content from the fetched p
 The \texttt{Storer} class is responsible for writing the fetched pages to WARC files. It uses the warcio library to create and manage WARC files, ensuring that each page is stored with its metadata. The storer handles file rotation when a certain size limit is reached, creating new WARC files as needed, with a default size of 1000 pages per file. The storer uses a lock to ensure that multiple threads do not write to the same file simultaneously, preventing data corruption.
 
 \subsection{Logger}
-The \texttt{Logger} class is responsible for logging the crawling process. If debugging is enabled, each thread calls the \texttt{Logger} to log the URL being fetched, the title of the page, the text content and the timestamp of the fetch operation. The logger uses a dedicated thread to write logs to a file, ensuring that logging does not block the main crawling threads. The log entries are saved in jsonl format, allowing for easy parsing and analysis later.
+The \texttt{Logger} class is responsible for logging the crawling process. If debugging is enabled, each thread calls the \texttt{Logger} to log the URL being fetched, the title of the page, the text content, and the timestamp of the fetch operation. The logger uses a dedicated thread to write logs to a file, ensuring that logging does not block the main crawling threads. The log entries are saved in jsonl format, allowing for easy parsing and analysis later.
 
 
 \section{Computational Complexity}
